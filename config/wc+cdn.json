@@ -1,0 +1,101 @@
+{
+    "dns": {
+        "disableFallback": true,
+        "queryStrategy": "UseIPv4",
+        "servers": [
+            "8.8.8.8",
+            "119.29.29.29",
+            "223.5.5.5",
+            "114.114.114.114"
+        ]
+    },
+    "inbounds": [
+        {
+            "listen": "0.0.0.0",
+            "port": "1089",
+            "protocol": "socks",
+            "settings": {
+                "auth": "noauth",
+                "udp": true,
+                "ip": "127.0.0.1"
+            }
+        },
+        {
+            "listen": "0.0.0.0",
+            "port": "8889",
+            "protocol": "http"
+        }
+    ],
+    "log": {
+        "loglevel": "none"
+    },
+    "outbounds": [
+        {
+            "protocol": "vmess",
+            "settings": {
+                "vnext": [
+                    {
+                        "address": "ipaddr",
+                        "port": 443,
+                        "users": [
+                            {
+                                "id": "id",
+                                "encryption": "none"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "streamSettings": {
+                "network": "ws",
+                "security": "tls",
+                "tlsSettings": {
+                    "fingerprint": "chrome",
+                    "serverName": "domain"
+                },
+                "wsSettings": {
+                    "headers": {
+                        "Host": "domain"
+                    },
+                    "path": "/cdnjpg?ed=2048"
+                }
+            },
+            "tag": "PROXY"
+        }
+    ],
+    "routing": {
+        "rules": [
+          {
+            "type": "field",
+            "outboundTag": "Reject",
+            "domain": ["geosite:category-ads-all"]
+          },
+          {
+            "type": "field",
+            "outboundTag": "Direct",
+            "domain": [
+              "geosite:private",
+              "geosite:apple-cn",
+              "geosite:google-cn",
+              "geosite:tld-cn",
+              "geosite:category-games@cn"
+            ]
+          },
+          {
+            "type": "field",
+            "outboundTag": "Proxy",
+            "domain": ["geosite:geolocation-!cn"]
+          },
+          {
+            "type": "field",
+            "outboundTag": "Direct",
+            "domain": ["geosite:cn"]
+          },
+          {
+            "type": "field",
+            "outboundTag": "Proxy",
+            "network": "tcp,udp"
+          }
+        ]
+      }
+}
