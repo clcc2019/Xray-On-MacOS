@@ -1,0 +1,155 @@
+{
+    "log": {
+        "loglevel": "info"
+    },
+    "dns": {
+        "disableFallback": true,
+        "queryStrategy": "UseIPv4",
+        "servers": [
+            "119.29.29.29",
+            "8.8.8.8",
+            "223.5.5.5",
+            "114.114.114.114"
+        ]
+    },
+    "fakedns": {
+        "ipPool": "198.18.0.0/15",
+        "poolSize": 65535
+    },
+    "inbounds": [
+        {
+            "listen": "0.0.0.0",
+            "port": 8889,
+            "protocol": "http",
+            "settings": {
+                "allowTransparent": true,
+                "timeout": 300
+            },
+            "sniffing": {
+            },
+            "tag": "http_IN"
+        },
+        {
+            "listen": "0.0.0.0",
+            "port": 1089,
+            "protocol": "socks",
+            "settings": {
+                "auth": "noauth"
+            },
+            "sniffing": {
+            },
+            "tag": "socks_IN"
+        }
+    ],
+
+    "outbounds": [
+        {
+            "protocol": "vless",
+            "settings": {
+                "vnext": [
+                    {
+                        "address": "ipaddr",
+                        "port": 443,
+                        "users": [
+                            {
+                                "encryption": "none",
+                                "flow": "xtls-rprx-vision",
+                                "id": "ip"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "streamSettings": {
+                "network": "tcp",
+                "security": "tls",
+                "tlsSettings": {
+                    "allowInsecure": false,
+                    "fingerprint": "chrome",
+                    "serverName": "domain"
+                }
+            },
+
+            "tag": "wsszdpsbmrduywg"
+        },
+        {
+            "protocol": "freedom",
+            "sendThrough": "0.0.0.0",
+            "settings": {
+                "domainStrategy": "AsIs",
+                "redirect": ":0"
+            },
+            "streamSettings": {
+            },
+            "tag": "DIRECT"
+        },
+        {
+            "protocol": "blackhole",
+            "sendThrough": "0.0.0.0",
+            "settings": {
+                "response": {
+                    "type": "none"
+                }
+            },
+            "streamSettings": {
+            },
+            "tag": "BLACKHOLE"
+        }
+    ],
+    "routing": {
+        "domainMatcher": "",
+        "domainStrategy": "IPIfNonMatch",
+        "rules": [
+            {
+                "ip": [
+                    "geoip:private"
+                ],
+                "outboundTag": "DIRECT",
+                "type": "field"
+            },
+            {
+                "domain": [
+                    "geosite:category-ads-all"
+                ],
+                "outboundTag": "BLACKHOLE",
+                "type": "field"
+            },
+            {
+                "domain": [
+                    "geosite:gfw",
+                    "geosite:geolocation-!cn",
+                    "raw.githubusercontent.com",
+                    "geosite:google",
+                    "geosite:geolocation-!cn",
+                    "geosite:greatfire"
+                ],
+                "outboundTag": "gopztewcgwegkra",
+                "type": "field"
+            },
+            {
+                "domain": [
+                    "geosite:cn",
+                    "geosite:apple-cn",
+                    "geosite:tld-cn",
+                    "geosite:private"
+                ],
+                "outboundTag": "DIRECT",
+                "type": "field"
+            },
+            {
+                "ip": [
+                    "geoip:cn"
+                ],
+                "outboundTag": "DIRECT",
+                "type": "field"
+            },
+            {
+                "domain": [
+                    "geosite:cn"
+                ],
+                "outboundTag": "DIRECT",
+                "type": "field"
+            }
+        ]
+    }
+}

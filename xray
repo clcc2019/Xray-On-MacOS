@@ -1,0 +1,119 @@
+#!/bin/bash
+
+binary_path=./bin/xray
+binary_log=xray.log
+binary_pid=xray.pid
+config_dir=./config
+
+function set_proxy() {
+    networksetup -setwebproxy "Wi-Fi" 127.0.0.1 8889
+    networksetup -setsecurewebproxy "Wi-Fi" 127.0.0.1 8889
+    networksetup -setsocksfirewallproxystate "Wi-Fi" on
+    networksetup -setsocksfirewallproxy "Wi-Fi" 127.0.0.1 1089
+    echo "Global proxy has been set to http://127.0.0.1:8889, socks://127.0.0.1:1089."
+}
+
+function unset_proxy() {
+    networksetup -setwebproxystate "Wi-Fi" off
+    networksetup -setsecurewebproxystate "Wi-Fi" off
+    networksetup -setsocksfirewallproxystate "Wi-Fi" off
+    echo "Global proxy has been turned off."
+}
+
+function start() {
+    if [ -f $binary_pid ]; then
+        pid=$(cat $binary_pid)
+        if kill -0 $pid &> /dev/null; then
+            echo "Process is already running with PID: $pid."
+            return
+        fi
+    fi
+
+    echo "Please select the config file:"
+    select config in $config_dir/*.json; do
+        if [ -f "$config" ]; then
+            break
+        else
+            echo "Invalid option. Please try again."
+        fi
+    done
+
+    set_proxy
+    $binary_path --config $config &> $binary_log &
+    echo $! > $binary_pid
+    echo "Process has been started with PID: $(cat $binary_pid)."
+}
+
+function stop() {
+    if [ -f $binary_pid ]; then
+        pid=$(cat $binary_pid)
+        if kill -0 $pid &> /dev/null; then
+            unset_proxy
+            kill $pid
+            echo "Process with PID: $pid has been stopped."
+            rm $binary_pid
+        else
+            echo "No process is running."
+        fi
+    else
+        echo "No process is running."
+    fi
+}
+
+function check_update {
+  export https_proxy=http://0.0.0.0:8889
+  if [ ! -f ${binary_path} ]; then
+    echo "xray不存在，正在下载最新版本"
+    download_xray
+  fi
+
+  latest_version=$(curl -L -s https://github.com/XTLS/Xray-core/tags | grep -o "v[0-9]\.[0-9]\.[0-9]" | grep -o "[0-9]\.[0-9]\.[0-9]" | head -1)
+  current_version=$(./bin/xray --version | grep -o "[0-9]\.[0-9]\.[0-9]" | head -1)
+  
+
+  if [ "$latest_version" != "$current_version" ]; then
+    echo "检查到新版本: v$latest_version, 当前版本: v$current_version"
+    echo "开始更新..."
+    download_xray
+    restart
+    echo "更新完成"
+  else
+    echo "已是最新版本: v$current_version"
+  fi
+}
+#下载最新版xray
+function download_xray {
+    latest_version=$(curl -L -s https://github.com/XTLS/Xray-core/tags | grep -o "v[0-9]\.[0-9]\.[0-9]" | head -1)
+    echo "下载最新版$latest_version"
+    wget https://ghproxy.com/https://github.com/XTLS/Xray-core/releases/download/v$latest_version/Xray-macos-arm64-v8a.zip
+    unzip Xray-macos-arm64-v8a.zip "*xray*" -d bin/
+    rm Xray-macos-arm64-v8a.zip
+    echo "下载完成"
+}
+
+function restart() {
+    if [ -f $pid_file ]; then
+        stop
+    fi
+    start
+}
+
+
+if [ $# -eq 0 ]; then
+    echo "No argument provided. Please provide either 'start' or 'stop'."
+    exit 1
+fi
+
+if [ "$1" == "start" ]; then
+    start
+elif [ "$1" == "stop" ]; then
+    stop
+elif [ "$1" == "restart" ]; then
+    restart
+elif [ "$1" == "update" ]; then
+    check_update
+else
+    echo "Invalid argument: $1. Please provide either 'start' or 'stop' or 'update'"
+    exit 1
+fi
+
