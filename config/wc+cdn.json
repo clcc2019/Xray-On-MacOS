@@ -61,41 +61,85 @@
                 }
             },
             "tag": "PROXY"
+        },
+        {
+            "protocol": "freedom",
+            "sendThrough": "0.0.0.0",
+            "settings": {
+                "domainStrategy": "AsIs",
+                "redirect": ":0"
+            },
+            "streamSettings": {
+            },
+            "tag": "DIRECT"
+        },
+        {
+            "protocol": "blackhole",
+            "sendThrough": "0.0.0.0",
+            "settings": {
+                "response": {
+                    "type": "none"
+                }
+            },
+            "streamSettings": {
+            },
+            "tag": "BLACKHOLE"
         }
     ],
     "routing": {
+        "domainMatcher": "",
+        "domainStrategy": "IPIfNonMatch",
         "rules": [
-          {
-            "type": "field",
-            "outboundTag": "Reject",
-            "domain": ["geosite:category-ads-all"]
-          },
-          {
-            "type": "field",
-            "outboundTag": "Direct",
-            "domain": [
-              "geosite:private",
-              "geosite:apple-cn",
-              "geosite:google-cn",
-              "geosite:tld-cn",
-              "geosite:category-games@cn"
-            ]
-          },
-          {
-            "type": "field",
-            "outboundTag": "Proxy",
-            "domain": ["geosite:geolocation-!cn"]
-          },
-          {
-            "type": "field",
-            "outboundTag": "Direct",
-            "domain": ["geosite:cn"]
-          },
-          {
-            "type": "field",
-            "outboundTag": "Proxy",
-            "network": "tcp,udp"
-          }
+            {
+                "ip": [
+                    "geoip:private"
+                ],
+                "outboundTag": "DIRECT",
+                "type": "field"
+            },
+            {
+                "domain": [
+                    "geosite:category-ads-all"
+                ],
+                "outboundTag": "BLACKHOLE",
+                "type": "field"
+            },
+            {
+                "domain": [
+                    "geosite:gfw",
+                    "geosite:geolocation-!cn",
+                    "raw.githubusercontent.com",
+                    "geosite:google",
+                    "geosite:geolocation-!cn",
+                    "geosite:greatfire"
+                ],
+                "outboundTag": "gopztewcgwegkra",
+                "type": "field"
+            },
+            {
+                "domain": [
+                    "geosite:cn",
+                    "geosite:apple-cn",
+                    "geosite:tld-cn",
+                    "geosite:private"
+                ],
+                "outboundTag": "DIRECT",
+                "type": "field"
+            },
+            {
+                "ip": [
+                    "geoip:cn"
+                ],
+                "outboundTag": "DIRECT",
+                "type": "field"
+            },
+            {
+                "domain": [
+                    "geosite:cn"
+                ],
+                "outboundTag": "DIRECT",
+                "type": "field"
+            }
         ]
-      }
+    }
 }
